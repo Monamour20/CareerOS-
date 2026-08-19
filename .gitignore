@@ -1,0 +1,42 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+.venv/
+venv/
+
+# Python caches
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Next.js
+.next/
+out/
+
+# Build / coverage
+coverage/
+dist/
+build/
+
+# Python packaging
+*.egg-info/
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Local IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# CareerOS local UI backups
+careeros-ui-backup-*/
+careeros-ui-final-backup-*/
+careeros-ui-last-pass-backup-*/
