@@ -15,7 +15,7 @@ from app.infrastructure.database.repositories.account import AccountRepository
 from app.infrastructure.database.repositories.career_profile import CareerProfileRepository
 from app.infrastructure.database.session import get_database_session, get_optional_database_session
 from app.infrastructure.document.service import DocumentExtractionService
-from app.infrastructure.llm.ollama import OllamaProvider
+from app.infrastructure.llm.factory import create_llm_client
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
@@ -25,11 +25,7 @@ def get_analyze_resume_use_case(
 ) -> AnalyzeResumeUseCase:
     settings: Settings = get_settings()
     extraction_service = DocumentExtractionService(libreoffice_path=settings.libreoffice_path)
-    llm_client = OllamaProvider(
-        base_url=settings.ollama_base_url,
-        model=settings.ollama_model,
-        timeout_seconds=settings.ollama_timeout_seconds,
-    )
+    llm_client = create_llm_client(settings)
     repository = CareerProfileRepository(session) if session is not None else None
     return AnalyzeResumeUseCase(
         extraction_service=extraction_service,
