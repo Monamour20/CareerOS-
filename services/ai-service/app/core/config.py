@@ -4,6 +4,7 @@ from pathlib import Path
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 SERVICE_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = SERVICE_ROOT.parents[1]
 
@@ -11,6 +12,11 @@ REPO_ROOT = SERVICE_ROOT.parents[1]
 class Settings(BaseSettings):
     environment: str = Field(default="local", alias="CAREEROS_ENV")
     log_level: str = Field(default="INFO", alias="CAREEROS_LOG_LEVEL")
+    
+    cors_origins: str = Field(
+        default="http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001",
+        alias="CAREEROS_CORS_ORIGINS",
+    )
 
     max_upload_bytes: int = Field(
         default=10 * 1024 * 1024,

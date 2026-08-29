@@ -1,4 +1,5 @@
 from app.infrastructure.database.models.achievement import AchievementRecord
+from app.infrastructure.database.models.ai_job import AIJobRecord
 from app.infrastructure.database.models.auth_session import AuthSessionRecord
 from app.infrastructure.database.models.career_preference import (
     CareerPreferenceItemRecord,
@@ -6,7 +7,10 @@ from app.infrastructure.database.models.career_preference import (
 )
 from app.infrastructure.database.models.career_profile import CareerProfileRecord
 from app.infrastructure.database.models.certification import CertificationRecord
-from app.infrastructure.database.models.education import EducationDetailRecord, EducationRecord
+from app.infrastructure.database.models.education import (
+    EducationDetailRecord,
+    EducationRecord,
+)
 from app.infrastructure.database.models.experience import (
     ExperienceRecord,
     ExperienceResponsibilityRecord,
@@ -21,6 +25,7 @@ from app.infrastructure.database.models.skill import SkillRecord
 from app.infrastructure.database.models.user import UserRecord
 
 __all__ = [
+    "AIJobRecord",
     "AchievementRecord",
     "AuthSessionRecord",
     "CareerPreferenceItemRecord",
