@@ -27,6 +27,7 @@ import { emptyCareerProfile } from "@/lib/profile";
 import type { AuthResponse, CareerProfile, User } from "@/lib/types";
 
 import Dashboard from "@/components/dashboard/Dashboard";
+import JobRecommendations from "@/components/jobs/JobRecommendations";
 import ResumeIntelligence from "@/components/resume/ResumeIntelligence";
 
 const navItems = [
@@ -42,7 +43,7 @@ const navItems = [
 ] as const;
 
 type Mode = "login" | "signup";
-type View = "dashboard" | "vault" | "resume";
+type View = "dashboard" | "vault" | "resume" | "jobs";
 
 const splitList = (value: string) =>
   value
@@ -147,6 +148,11 @@ export default function Home() {
 
     if (label === "Resume Intelligence") {
       setView("resume");
+      return;
+    }
+
+    if (label === "Jobs & Opportunities") {
+      setView("jobs");
       return;
     }
 
@@ -309,7 +315,8 @@ export default function Home() {
               const active =
                 (label === "Dashboard" && view === "dashboard") ||
                 (label === "Career Vault" && view === "vault") ||
-                (label === "Resume Intelligence" && view === "resume");
+                (label === "Resume Intelligence" && view === "resume") ||
+                (label === "Jobs & Opportunities" && view === "jobs");
 
               return (
                 <button
@@ -452,7 +459,9 @@ export default function Home() {
                   (label === "Career Vault" &&
                     view === "vault") ||
                   (label === "Resume Intelligence" &&
-                    view === "resume");
+                    view === "resume") ||
+                  (label === "Jobs & Opportunities" &&
+                    view === "jobs");
 
                 return (
                   <button
@@ -493,6 +502,8 @@ export default function Home() {
               token={token}
               onBack={() => setView("dashboard")}
             />
+          ) : view === "jobs" ? (
+            <JobRecommendations token={token} />
           ) : (
             <Dashboard
               profile={profile}

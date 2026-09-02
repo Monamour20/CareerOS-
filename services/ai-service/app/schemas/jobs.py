@@ -45,12 +45,19 @@ class JobDiscoveryResponse(BaseModel):
     updated: int
     jobs: list[JobResponse]
 
+
 class JobMatchResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    job_id: int
+    job: JobResponse
     score: float = Field(ge=0, le=100)
     category: str
-    matched_skills: list[str] = Field(default_factory=list)
-    missing_skills: list[str] = Field(default_factory=list)
-    reasons: list[str] = Field(default_factory=list)
+    matched_skills: list[str] = Field(
+        default_factory=list
+    )
+    missing_skills: list[str] = Field(
+        default_factory=list
+    )
+    reasons: list[str] = Field(
+        default_factory=list
+    )

@@ -14,8 +14,9 @@ from app.infrastructure.database.models import UserRecord
 from app.infrastructure.database.repositories.career_profile import (
     CareerProfileRepository,
 )
+from app.infrastructure.database.repositories.job import job_to_domain
 from app.infrastructure.database.session import get_database_session
-from app.schemas.jobs import JobMatchResponse
+from app.schemas.jobs import JobMatchResponse, JobResponse
 
 
 router = APIRouter(
@@ -60,14 +61,25 @@ async def get_recommended_jobs(
         offset=offset,
     )
 
-    return [
-        JobMatchResponse(
-            job_id=item.job_id,
-            score=item.match.score,
-            category=item.category.value,
-            matched_skills=item.match.matched_skills,
-            missing_skills=item.match.missing_skills,
-            reasons=item.match.reasons,
+    responses: list[JobMatchResponse] = []
+
+    for item in recommendations:
+        job_record = service.job_service.get_job(item.job_id)
+
+        if job_record is None:
+            continue
+
+        job = job_to_domain(job_record)
+
+        responses.append(
+            JobMatchResponse(
+                job=JobResponse.model_validate(job_record),
+                score=item.match.score,
+                category=item.category.value,
+                matched_skills=item.match.matched_skills,
+                missing_skills=item.match.missing_skills,
+                reasons=item.match.reasons,
+            )
         )
-        for item in recommendations
-    ]
+
+    return responses
