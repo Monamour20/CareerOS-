@@ -1,9 +1,10 @@
 from app.application.ai_gateway import AIGateway, AIRequest, AITask
 from app.application.career_intelligence.context import CareerContext
+from app.application.career_intelligence.models import CareerAnalysis
 
 
 class CareerIntelligenceService:
-    """Builds and analyzes a user's career context."""
+    """Analyzes a user's career context into actionable career insights."""
 
     def __init__(self, ai_gateway: AIGateway):
         self.ai_gateway = ai_gateway
@@ -32,23 +33,50 @@ class CareerIntelligenceService:
     async def analyze(
         self,
         context: CareerContext,
-    ) -> str:
-        return await self.ai_gateway.execute(
+    ) -> CareerAnalysis:
+        raw_output = await self.ai_gateway.execute(
             AIRequest(
                 task=AITask.CAREER_PROFILE_EXTRACTION,
                 system_prompt=(
                     "You are CareerOS Career Intelligence. "
-                    "Analyze career information accurately. "
+                    "Analyze the user's career information accurately. "
                     "Never invent experience, skills, education, "
-                    "or preferences."
+                    "achievements, or preferences. "
+                    "Return ONLY valid JSON. "
+                    "Do not use Markdown code fences."
                 ),
                 user_prompt=(
-                    "Analyze the following career context and "
-                    "return useful structured career insights.\n\n"
-                    f"{context.to_prompt_context()}"
+                    "Analyze the following career context and produce "
+                    "actionable career intelligence.\n\n"
+                    f"{context.to_prompt_context()}\n\n"
+                    "Return JSON with exactly these fields:\n"
+                    "- career_summary: string\n"
+                    "- strengths: array of strings\n"
+                    "- growth_areas: array of strings\n"
+                    "- next_actions: array of strings"
                 ),
             )
         )
+
+        return CareerAnalysis.model_validate_json(
+            self._clean_json_output(raw_output)
+        )
+
+    @staticmethod
+    def _clean_json_output(raw_output: str) -> str:
+        """Remove accidental Markdown code fences around JSON."""
+
+        output = raw_output.strip()
+
+        if output.startswith("```json"):
+            output = output[len("```json"):].strip()
+        elif output.startswith("```"):
+            output = output[len("```"):].strip()
+
+        if output.endswith("```"):
+            output = output[:-3].strip()
+
+        return output
 
     @staticmethod
     def _clean(values: list[str] | None) -> list[str]:

@@ -1,3 +1,5 @@
+from app.infrastructure.database.models.job import JobRecord
+from app.infrastructure.database.models.job_skill import JobSkillRecord
 from app.infrastructure.database.models.achievement import AchievementRecord
 from app.infrastructure.database.models.ai_job import AIJobRecord
 from app.infrastructure.database.models.auth_session import AuthSessionRecord

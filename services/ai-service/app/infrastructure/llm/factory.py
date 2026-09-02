@@ -3,6 +3,7 @@ from app.core.errors import LLMConnectionError
 from app.infrastructure.llm.base import LLMClient
 from app.infrastructure.llm.ollama import OllamaProvider
 from app.infrastructure.llm.openai import OpenAIProvider
+from app.infrastructure.llm.gemini import GeminiProvider
 
 
 def create_llm_client(settings: Settings) -> LLMClient:
@@ -13,6 +14,18 @@ def create_llm_client(settings: Settings) -> LLMClient:
             base_url=settings.ollama_base_url,
             model=settings.ollama_model,
             timeout_seconds=settings.ollama_timeout_seconds,
+        )
+
+    if provider == "gemini":
+        if not settings.gemini_api_key:
+            raise LLMConnectionError(
+                "GEMINI_API_KEY is required when LLM_PROVIDER=gemini."
+            )
+
+        return GeminiProvider(
+            api_key=settings.gemini_api_key,
+            model=settings.gemini_model,
+            timeout_seconds=settings.gemini_timeout_seconds,
         )
 
     if provider == "openai":

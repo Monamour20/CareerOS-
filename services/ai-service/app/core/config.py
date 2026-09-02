@@ -10,11 +10,23 @@ REPO_ROOT = SERVICE_ROOT.parents[1]
 
 
 class Settings(BaseSettings):
-    environment: str = Field(default="local", alias="CAREEROS_ENV")
-    log_level: str = Field(default="INFO", alias="CAREEROS_LOG_LEVEL")
-    
+    environment: str = Field(
+        default="local",
+        alias="CAREEROS_ENV",
+    )
+
+    log_level: str = Field(
+        default="INFO",
+        alias="CAREEROS_LOG_LEVEL",
+    )
+
     cors_origins: str = Field(
-        default="http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001",
+        default=(
+            "http://localhost:3000,"
+            "http://127.0.0.1:3000,"
+            "http://localhost:3001,"
+            "http://127.0.0.1:3001"
+        ),
         alias="CAREEROS_CORS_ORIGINS",
     )
 
@@ -23,10 +35,23 @@ class Settings(BaseSettings):
         alias="CAREEROS_MAX_UPLOAD_BYTES",
     )
 
+    adzuna_app_id: str | None = None
+    adzuna_app_key: str | None = None
+    adzuna_country: str = "in"
+    adzuna_timeout_seconds: float = 30.0
+    
+    # =========================
+    # LLM PROVIDER
+    # =========================
+
     llm_provider: str = Field(
-        default="ollama",
+        default="gemini",
         alias="LLM_PROVIDER",
     )
+
+    # =========================
+    # OLLAMA
+    # =========================
 
     ollama_base_url: str = Field(
         default="http://localhost:11434",
@@ -34,7 +59,7 @@ class Settings(BaseSettings):
     )
 
     ollama_model: str = Field(
-        default="qwen3.5:9b",
+        default="",
         alias="OLLAMA_MODEL",
     )
 
@@ -43,13 +68,17 @@ class Settings(BaseSettings):
         alias="OLLAMA_TIMEOUT_SECONDS",
     )
 
+    # =========================
+    # OPENAI
+    # =========================
+
     openai_api_key: str | None = Field(
         default=None,
         alias="OPENAI_API_KEY",
     )
 
     openai_model: str = Field(
-        default="gpt-5.6-luna",
+        default="",
         alias="OPENAI_MODEL",
     )
 
@@ -58,10 +87,36 @@ class Settings(BaseSettings):
         alias="OPENAI_TIMEOUT_SECONDS",
     )
 
+    # =========================
+    # GEMINI
+
+    gemini_api_key: str | None = Field(
+        default=None,
+        alias="GEMINI_API_KEY",
+    )
+
+    gemini_model: str = Field(
+        default="gemini-3.6-flash",
+        alias="GEMINI_MODEL",
+    )
+
+    gemini_timeout_seconds: float = Field(
+        default=120.0,
+        alias="GEMINI_TIMEOUT_SECONDS",
+    )
+
+    # =========================
+    # DOCUMENT PROCESSING
+    # =========================
+
     libreoffice_path: str | None = Field(
         default=None,
         alias="LIBREOFFICE_PATH",
     )
+
+    # =========================
+    # DATABASE
+    # =========================
 
     database_url: str | None = Field(
         default=None,
