@@ -43,8 +43,17 @@ async def test_llm_failure_handling():
 def test_resume_analyze_endpoint(client):
     response = client.post(
         "/api/v1/resume/analyze",
-        files={"file": ("resume.txt", b"Ada Lovelace\nPython", "text/plain")},
+        files={
+            "file": (
+                "resume.txt",
+                b"Ada Lovelace\nPython",
+                "text/plain",
+            )
+        },
     )
 
     assert response.status_code == 200
-    assert response.json()["career_profile"]["personal_information"]["full_name"] == "Ada Lovelace"
+    assert (
+        response.json()["career_profile"]["personal_information"]["full_name"]
+        == "Ada Lovelace"
+    )

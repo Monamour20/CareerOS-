@@ -34,7 +34,11 @@ class AnalyzeResumeUseCase:
         self.validator = validator or CareerProfileValidator()
         self.career_profile_repository = career_profile_repository
 
-    async def execute(self, resume_file: ResumeFile) -> CareerProfile:
+    async def execute(
+        self,
+        resume_file: ResumeFile,
+        user_id: int | None = None,
+    ) -> CareerProfile:
         if not resume_file.content:
             raise InvalidFileError("Uploaded file is empty.")
 
@@ -106,7 +110,10 @@ class AnalyzeResumeUseCase:
         )
 
         if self.career_profile_repository is not None:
-            self.career_profile_repository.save(profile)
+            self.career_profile_repository.save(
+                profile,
+                user_id=user_id,
+            )
 
         total_seconds = time.perf_counter() - total_start
 

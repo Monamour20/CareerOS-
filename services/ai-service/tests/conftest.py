@@ -3,9 +3,13 @@ from collections.abc import AsyncIterator
 import pytest
 from fastapi.testclient import TestClient
 
-from app.api.dependencies import get_analyze_resume_use_case
+from app.api.dependencies import (
+    get_analyze_resume_use_case,
+    get_current_user,
+)
 from app.application.analyze_resume import AnalyzeResumeUseCase
 from app.domain.career_profile.models import CareerProfile
+from app.infrastructure.database.models import UserRecord
 from app.infrastructure.document.service import DocumentExtractionService
 from app.main import app
 
@@ -20,7 +24,12 @@ VALID_PROFILE = {
     },
     "education": [],
     "experience": [],
-    "skills": {"technical": ["Python"], "tools": [], "languages": [], "soft_skills": []},
+    "skills": {
+        "technical": ["Python"],
+        "tools": [],
+        "languages": [],
+        "soft_skills": [],
+    },
     "projects": [],
     "certifications": [],
     "achievements": [],
@@ -45,7 +54,17 @@ def client() -> AsyncIterator[TestClient]:
         extraction_service=DocumentExtractionService(),
         llm_client=FakeLLM(),
     )
+
+    test_user = UserRecord(
+        id=1,
+        email="test@example.com",
+        full_name="Test User",
+    )
+
     app.dependency_overrides[get_analyze_resume_use_case] = lambda: use_case
+    app.dependency_overrides[get_current_user] = lambda: test_user
+
     with TestClient(app) as test_client:
         yield test_client
+
     app.dependency_overrides.clear()
