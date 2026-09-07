@@ -42,45 +42,55 @@ class CareerProfileRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def save(self, profile: CareerProfile, user_id: int | None = None) -> int:
+    def save(
+        self,
+        profile: CareerProfile,
+        user_id: int | None = None,
+    ) -> int:
         try:
-            user = self._get_or_create_user(profile, user_id)
+            user = self._get_or_create_user(
+                profile,
+                user_id,
+            )
 
-            user.full_name = profile.personal_information.full_name
+            if user.id is None:
+                user.full_name = (
+                    profile.personal_information.full_name
+                )
+                user.email = (
+                    profile.personal_information.email
+                )
 
-            # Do not overwrite the authenticated account email with an
-            # email extracted from a resume.
-            if user.id is None and profile.personal_information.email:
-                user.email = profile.personal_information.email
-
-            new_record = self._to_record(profile)
-
-            if user.career_profile is None:
-                user.career_profile = new_record
+                self.session.add(user)
+                self.session.flush()
             else:
-                existing = user.career_profile
+                user.full_name = (
+                    profile.personal_information.full_name
+                )
 
-                existing.phone = new_record.phone
-                existing.location = new_record.location
-                existing.linkedin = new_record.linkedin
-                existing.github = new_record.github
-                existing.summary = new_record.summary
+            career_profile = user.career_profile
 
-                existing.education = new_record.education
-                existing.experience = new_record.experience
-                existing.skills = new_record.skills
-                existing.projects = new_record.projects
-                existing.certifications = new_record.certifications
-                existing.achievements = new_record.achievements
-                existing.career_preference = new_record.career_preference
+            if career_profile is None:
+                career_profile = CareerProfileRecord(
+                    user_id=user.id,
+                )
 
-            self.session.add(user)
+                user.career_profile = career_profile
+                self.session.add(career_profile)
+                self.session.flush()
+
+            self._update_career_profile_record(
+                career_profile,
+                profile,
+            )
+
             self.session.commit()
 
             return user.id
 
         except SQLAlchemyError as exc:
             self.session.rollback()
+
             logger.exception(
                 "career_profile_persistence_failed",
                 extra={
@@ -88,57 +98,114 @@ class CareerProfileRepository:
                     "error_type": type(exc).__name__,
                 },
             )
+
             raise DatabaseOperationError(
                 "Could not save CareerProfile."
             ) from exc
 
-    def get_by_user_id(self, user_id: int) -> CareerProfile | None:
+    def get_by_user_id(
+        self,
+        user_id: int,
+    ) -> CareerProfile | None:
         statement = (
             select(UserRecord)
             .where(UserRecord.id == user_id)
             .options(
-                selectinload(UserRecord.career_profile).selectinload(
+                selectinload(
+                    UserRecord.career_profile
+                ).selectinload(
                     CareerProfileRecord.education
                 ),
-                selectinload(UserRecord.career_profile)
-                .selectinload(CareerProfileRecord.education)
-                .selectinload(EducationRecord.details),
-                selectinload(UserRecord.career_profile).selectinload(
+                selectinload(
+                    UserRecord.career_profile
+                )
+                .selectinload(
+                    CareerProfileRecord.education
+                )
+                .selectinload(
+                    EducationRecord.details
+                ),
+                selectinload(
+                    UserRecord.career_profile
+                ).selectinload(
                     CareerProfileRecord.experience
                 ),
-                selectinload(UserRecord.career_profile)
-                .selectinload(CareerProfileRecord.experience)
-                .selectinload(ExperienceRecord.responsibilities),
-                selectinload(UserRecord.career_profile)
-                .selectinload(CareerProfileRecord.experience)
-                .selectinload(ExperienceRecord.technologies),
-                selectinload(UserRecord.career_profile).selectinload(
+                selectinload(
+                    UserRecord.career_profile
+                )
+                .selectinload(
+                    CareerProfileRecord.experience
+                )
+                .selectinload(
+                    ExperienceRecord.responsibilities
+                ),
+                selectinload(
+                    UserRecord.career_profile
+                )
+                .selectinload(
+                    CareerProfileRecord.experience
+                )
+                .selectinload(
+                    ExperienceRecord.technologies
+                ),
+                selectinload(
+                    UserRecord.career_profile
+                ).selectinload(
                     CareerProfileRecord.skills
                 ),
-                selectinload(UserRecord.career_profile).selectinload(
+                selectinload(
+                    UserRecord.career_profile
+                ).selectinload(
                     CareerProfileRecord.projects
                 ),
-                selectinload(UserRecord.career_profile)
-                .selectinload(CareerProfileRecord.projects)
-                .selectinload(ProjectRecord.technologies),
-                selectinload(UserRecord.career_profile)
-                .selectinload(CareerProfileRecord.projects)
-                .selectinload(ProjectRecord.links),
-                selectinload(UserRecord.career_profile).selectinload(
+                selectinload(
+                    UserRecord.career_profile
+                )
+                .selectinload(
+                    CareerProfileRecord.projects
+                )
+                .selectinload(
+                    ProjectRecord.technologies
+                ),
+                selectinload(
+                    UserRecord.career_profile
+                )
+                .selectinload(
+                    CareerProfileRecord.projects
+                )
+                .selectinload(
+                    ProjectRecord.links
+                ),
+                selectinload(
+                    UserRecord.career_profile
+                ).selectinload(
                     CareerProfileRecord.certifications
                 ),
-                selectinload(UserRecord.career_profile).selectinload(
+                selectinload(
+                    UserRecord.career_profile
+                ).selectinload(
                     CareerProfileRecord.achievements
                 ),
-                selectinload(UserRecord.career_profile)
-                .selectinload(CareerProfileRecord.career_preference)
-                .selectinload(CareerPreferenceRecord.items),
+                selectinload(
+                    UserRecord.career_profile
+                )
+                .selectinload(
+                    CareerProfileRecord.career_preference
+                )
+                .selectinload(
+                    CareerPreferenceRecord.items
+                ),
             )
         )
 
-        user = self.session.scalars(statement).first()
+        user = self.session.scalars(
+            statement
+        ).first()
 
-        if user is None or user.career_profile is None:
+        if user is None:
+            return None
+
+        if user.career_profile is None:
             return None
 
         return self._from_record(user)
@@ -149,10 +216,15 @@ class CareerProfileRepository:
         user_id: int | None,
     ) -> UserRecord:
         if user_id is not None:
-            user = self.session.get(UserRecord, user_id)
+            user = self.session.get(
+                UserRecord,
+                user_id,
+            )
 
             if user is None:
-                user = UserRecord(id=user_id)
+                raise DatabaseOperationError(
+                    "Authenticated user does not exist."
+                )
 
             return user
 
@@ -160,7 +232,9 @@ class CareerProfileRepository:
 
         if email:
             user = self.session.scalars(
-                select(UserRecord).where(UserRecord.email == email)
+                select(UserRecord).where(
+                    UserRecord.email == email
+                )
             ).first()
 
             if user is not None:
@@ -168,17 +242,27 @@ class CareerProfileRepository:
 
         return UserRecord()
 
-    def _to_record(self, profile: CareerProfile) -> CareerProfileRecord:
-        linkedin, github = self._extract_profile_links(
-            profile.personal_information.links
+    def _update_career_profile_record(
+        self,
+        record: CareerProfileRecord,
+        profile: CareerProfile,
+    ) -> None:
+        linkedin, github = (
+            self._extract_profile_links(
+                profile.personal_information.links
+            )
         )
 
-        record = CareerProfileRecord(
-            phone=profile.personal_information.phone,
-            location=profile.personal_information.location,
-            linkedin=linkedin,
-            github=github,
-            summary=profile.personal_information.summary,
+        record.phone = (
+            profile.personal_information.phone
+        )
+        record.location = (
+            profile.personal_information.location
+        )
+        record.linkedin = linkedin
+        record.github = github
+        record.summary = (
+            profile.personal_information.summary
         )
 
         record.education = [
@@ -194,10 +278,14 @@ class CareerProfileRepository:
                         detail=detail,
                         sort_order=detail_index,
                     )
-                    for detail_index, detail in enumerate(item.details)
+                    for detail_index, detail in enumerate(
+                        item.details
+                    )
                 ],
             )
-            for index, item in enumerate(profile.education)
+            for index, item in enumerate(
+                profile.education
+            )
         ]
 
         record.experience = [
@@ -227,10 +315,14 @@ class CareerProfileRepository:
                     )
                 ],
             )
-            for index, item in enumerate(profile.experience)
+            for index, item in enumerate(
+                profile.experience
+            )
         ]
 
-        record.skills = self._skill_records(profile.skills)
+        record.skills = self._skill_records(
+            profile.skills
+        )
 
         record.projects = [
             ProjectRecord(
@@ -251,10 +343,14 @@ class CareerProfileRepository:
                         url=link,
                         sort_order=link_index,
                     )
-                    for link_index, link in enumerate(item.links)
+                    for link_index, link in enumerate(
+                        item.links
+                    )
                 ],
             )
-            for index, item in enumerate(profile.projects)
+            for index, item in enumerate(
+                profile.projects
+            )
         ]
 
         record.certifications = [
@@ -264,7 +360,9 @@ class CareerProfileRepository:
                 date=item.date,
                 sort_order=index,
             )
-            for index, item in enumerate(profile.certifications)
+            for index, item in enumerate(
+                profile.certifications
+            )
         ]
 
         record.achievements = [
@@ -273,24 +371,57 @@ class CareerProfileRepository:
                 description=item.description,
                 sort_order=index,
             )
-            for index, item in enumerate(profile.achievements)
+            for index, item in enumerate(
+                profile.achievements
+            )
         ]
 
-        record.career_preference = CareerPreferenceRecord(
-            seniority=profile.career_interests.seniority,
-            items=self._preference_items(profile.career_interests),
+        self._update_career_preference(
+            record,
+            profile.career_interests,
         )
 
-        return record
+    def _update_career_preference(
+        self,
+        career_profile: CareerProfileRecord,
+        interests: CareerInterests,
+    ) -> None:
+        preference = (
+            career_profile.career_preference
+        )
 
-    def _from_record(self, user: UserRecord) -> CareerProfile:
+        if preference is None:
+            preference = CareerPreferenceRecord(
+                career_profile_id=career_profile.id,
+            )
+
+            career_profile.career_preference = (
+                preference
+            )
+
+            self.session.add(preference)
+            self.session.flush()
+
+        preference.seniority = interests.seniority
+
+        preference.items = self._preference_items(
+            interests
+        )
+
+    def _from_record(
+        self,
+        user: UserRecord,
+    ) -> CareerProfile:
         record = user.career_profile
 
         assert record is not None
 
         links = [
             link
-            for link in (record.linkedin, record.github)
+            for link in (
+                record.linkedin,
+                record.github,
+            )
             if link
         ]
 
@@ -314,13 +445,17 @@ class CareerProfileRepository:
                         detail.detail
                         for detail in sorted(
                             item.details,
-                            key=lambda detail: detail.sort_order,
+                            key=lambda detail: (
+                                detail.sort_order
+                            ),
                         )
                     ],
                 )
                 for item in sorted(
                     record.education,
-                    key=lambda item: item.sort_order,
+                    key=lambda item: (
+                        item.sort_order
+                    ),
                 )
             ],
             experience=[
@@ -334,23 +469,31 @@ class CareerProfileRepository:
                         detail.responsibility
                         for detail in sorted(
                             item.responsibilities,
-                            key=lambda detail: detail.sort_order,
+                            key=lambda detail: (
+                                detail.sort_order
+                            ),
                         )
                     ],
                     technologies=[
                         technology.technology
                         for technology in sorted(
                             item.technologies,
-                            key=lambda technology: technology.sort_order,
+                            key=lambda technology: (
+                                technology.sort_order
+                            ),
                         )
                     ],
                 )
                 for item in sorted(
                     record.experience,
-                    key=lambda item: item.sort_order,
+                    key=lambda item: (
+                        item.sort_order
+                    ),
                 )
             ],
-            skills=self._skills_from_record(record.skills),
+            skills=self._skills_from_record(
+                record.skills
+            ),
             projects=[
                 ProjectItem(
                     name=item.name,
@@ -359,20 +502,26 @@ class CareerProfileRepository:
                         technology.technology
                         for technology in sorted(
                             item.technologies,
-                            key=lambda technology: technology.sort_order,
+                            key=lambda technology: (
+                                technology.sort_order
+                            ),
                         )
                     ],
                     links=[
                         link.url
                         for link in sorted(
                             item.links,
-                            key=lambda link: link.sort_order,
+                            key=lambda link: (
+                                link.sort_order
+                            ),
                         )
                     ],
                 )
                 for item in sorted(
                     record.projects,
-                    key=lambda item: item.sort_order,
+                    key=lambda item: (
+                        item.sort_order
+                    ),
                 )
             ],
             certifications=[
@@ -383,7 +532,9 @@ class CareerProfileRepository:
                 )
                 for item in sorted(
                     record.certifications,
-                    key=lambda item: item.sort_order,
+                    key=lambda item: (
+                        item.sort_order
+                    ),
                 )
             ],
             achievements=[
@@ -393,15 +544,22 @@ class CareerProfileRepository:
                 )
                 for item in sorted(
                     record.achievements,
-                    key=lambda item: item.sort_order,
+                    key=lambda item: (
+                        item.sort_order
+                    ),
                 )
             ],
-            career_interests=self._career_interests_from_record(
-                record.career_preference
+            career_interests=(
+                self._career_interests_from_record(
+                    record.career_preference
+                )
             ),
         )
 
-    def _skill_records(self, skills: Skills) -> list[SkillRecord]:
+    def _skill_records(
+        self,
+        skills: Skills,
+    ) -> list[SkillRecord]:
         records: list[SkillRecord] = []
 
         for category, values in (
@@ -437,7 +595,9 @@ class CareerProfileRepository:
             key=lambda item: item.sort_order,
         ):
             if record.category in grouped:
-                grouped[record.category].append(record.name)
+                grouped[
+                    record.category
+                ].append(record.name)
 
         return Skills(**grouped)
 
@@ -445,13 +605,27 @@ class CareerProfileRepository:
         self,
         interests: CareerInterests,
     ) -> list[CareerPreferenceItemRecord]:
-        items: list[CareerPreferenceItemRecord] = []
+        items: list[
+            CareerPreferenceItemRecord
+        ] = []
 
         for category, values in (
-            ("target_roles", interests.target_roles),
-            ("industries", interests.industries),
-            ("strengths", interests.strengths),
-            ("growth_areas", interests.growth_areas),
+            (
+                "target_roles",
+                interests.target_roles,
+            ),
+            (
+                "industries",
+                interests.industries,
+            ),
+            (
+                "strengths",
+                interests.strengths,
+            ),
+            (
+                "growth_areas",
+                interests.growth_areas,
+            ),
         ):
             items.extend(
                 CareerPreferenceItemRecord(
@@ -483,7 +657,9 @@ class CareerProfileRepository:
             key=lambda item: item.sort_order,
         ):
             if item.category in grouped:
-                grouped[item.category].append(item.value)
+                grouped[
+                    item.category
+                ].append(item.value)
 
         return CareerInterests(
             seniority=record.seniority,
