@@ -49,45 +49,42 @@ CareerOS currently uses a deterministic Job Match Score with a range of 0–100.
 CareerOS compares candidate skills against job skills.
 
 ## Required-Skill Coverage
-
-```text
-required_skill_coverage =
-matched_required_skills / total_required_skills
-
-## Checklist
-Numerator = required skills that are actually matched.
-Denominator = total required skills.
-Zero required skills has explicit behavior.
-Coverage stays between 0 and 1.
-Percentage display converts the value correctly.
-Required and preferred skills are kept separate.
-A skill cannot be both matched and missing.
-Skill normalization is consistent.
-Skill aliases are handled consistently.
-Duplicate skills do not inflate the score.
-Missing required skills are separate from missing preferred skills.
+Checklist
+ Numerator = required skills that are actually matched.
+ Denominator = total required skills.
+ Zero required skills has explicit behavior.
+ Coverage stays between 0 and 1.
+ Percentage display converts the value correctly.
+ Required and preferred skills are kept separate.
+ A skill cannot be both matched and missing.
+ Skill normalization is consistent.
+ Skill aliases are handled consistently.
+ Duplicate skills do not inflate the score.
+ Missing required skills are separate from missing preferred skills.
 Current Recommendation Rule
 
 Jobs with less than 50% required-skill match are excluded.
 
 Skill-gap recommendations can still appear when required-skill coverage is at least 50%.
+
+Boundary Tests
 49%
 50%
 51%
-
-# 3. Job Recommendation Thresholds
+3. Job Recommendation Thresholds
 
 Current CareerOS recommendation thresholds:
 
-Category	                   Threshold
-Potential	                      40+
-Strong	                          70+
-Excellent	                      85+
+Category	Threshold
+Potential	40+
+Strong	70+
+Excellent	85+
 Below recommendation minimum	Below 40
 
 Current minimum recommendation score:
+
 40
-# Checklist
+Checklist
  Score below 40 is excluded.
  Score = 40 is tested.
  Score = 69 is tested.
@@ -98,20 +95,19 @@ Current minimum recommendation score:
  Category boundaries are identical in backend and frontend.
  UI labels match backend categories.
  Recommendation thresholds are not duplicated with conflicting values.
+4. Job Recommendation Candidate Limits
 
- # 4. Job Recommendation Candidate Limits
 CareerOS currently defines:
-MAX_CANDIDATES = 100
 
-# Checklist
+MAX_CANDIDATES = 100
+Checklist
  Candidate generation cannot exceed the intended limit.
  Pagination is not confused with candidate generation.
  Filtering does not change the meaning of the score.
  Empty candidate sets are handled correctly.
  Candidate limits are documented.
  Boundary behavior at the candidate limit is tested.
-
- # 5. JD Intelligence — Requirement Classification
+5. JD Intelligence — Requirement Classification
 
 JD Intelligence separates:
 
@@ -121,8 +117,7 @@ Experience requirements
 Education requirements
 Certification requirements
 Responsibilities
-
-# Checklist
+Checklist
  Required and preferred lists are disjoint after normalization.
  Requirements are supported by the job description.
  Required/preferred classification is based on job-description wording.
@@ -131,8 +126,7 @@ Responsibilities
  Qwen does not calculate the overall match score.
  CareerOS application logic remains responsible for deterministic calculations.
  Requirement lists are validated before being used by later features.
-
- 6. JD Intelligence — Skill Gap
+6. JD Intelligence — Skill Gap
 
 Required values:
 
@@ -497,10 +491,26 @@ What happens at its boundaries?
 If these questions cannot be answered, the number is not ready to be trusted.
 
 
-### So you need these two files
+### Step 4 — Check before saving
 
+After pasting, **do not click Commit changes yet**.
+
+Click **Preview** at the top.
+
+You should see:
+
+- `# CareerOS Mathematical Detail Checklist` as the main title
+- `# 1. Job Match Score`
+- `# 2. Skill Matching`
+- `# 3. Job Recommendation Thresholds`
+- etc.
+- Tables should render as tables.
+- Checkboxes should appear as checkboxes.
+- The formulas should appear inside code blocks.
+
+If Preview looks correct, **send me a screenshot of the Preview**.
+
+Then I'll give you the next step: **committing this corrected file to the exported branch.**
 ```text
-docs/checklists/Mathematical_Detail_Checklist_Generic.md
-docs/checklists/CareerOS_Mathematical_Detail_Checklist.md
-
-The second one above now uses proper Markdown headings such as #, ##, and ###, so VS Code/GitHub will render the hierarchy correctly.
+required_skill_coverage =
+matched_required_skills / total_required_skills
